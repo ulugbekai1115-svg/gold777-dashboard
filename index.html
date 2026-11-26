@@ -6,31 +6,38 @@
   <title>Dashboard · Gold 777 Mebel korxonasi</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bodoni+Moda:opsz,wght@6..96,600;6..96,700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2l12 4v9c0 8-5.5 13-12 15C9.5 28 4 23 4 15V6z' fill='%23c9a45c'/%3E%3Ctext x='16' y='21' text-anchor='middle' font-family='Arial' font-weight='700' font-size='14' fill='%230f1e36'%3EG%3C/text%3E%3C/svg%3E" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%230f1e36'/%3E%3Ccircle cx='50' cy='50' r='43' fill='none' stroke='%23d4ae62' stroke-width='6'/%3E%3Cg fill='none' stroke='%23d4ae62' stroke-width='6'%3E%3Cpath d='M35 30A11 11 0 0 0 13 30V70A11 11 0 0 0 35 70V56H24'/%3E%3Cpath d='M61 30A11 11 0 0 0 39 30V70A11 11 0 0 0 61 70V56H50'/%3E%3Cpath d='M87 30A11 11 0 0 0 65 30V70A11 11 0 0 0 87 70V56H76'/%3E%3C/g%3E%3C/svg%3E" />
 </head>
 <body>
   <div class="app">
     <!-- ============ SIDEBAR ============ -->
     <aside class="sidebar">
       <div class="brand">
-        <svg class="brand-logo" viewBox="0 0 48 56" aria-hidden="true">
+        <!-- GOLD777 MEBEL logotipi: doira ichida GGG monogramma -->
+        <svg class="brand-logo" viewBox="0 0 100 100" aria-label="GOLD777 Mebel">
           <defs>
             <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#f3d48b" />
-              <stop offset=".5" stop-color="#c9a45c" />
-              <stop offset="1" stop-color="#8f6a2e" />
+              <stop offset="0" stop-color="#f6dc9c" />
+              <stop offset=".45" stop-color="#d4ae62" />
+              <stop offset="1" stop-color="#9c7433" />
             </linearGradient>
+            <clipPath id="ggg-clip"><circle cx="50" cy="50" r="44.5" /></clipPath>
           </defs>
-          <path d="M14 9l4-6 6 5 6-5 4 6z" fill="url(#gold)" />
-          <path d="M24 10l18 5v14c0 12-8 20-18 24C14 49 6 41 6 29V15z" fill="none" stroke="url(#gold)" stroke-width="2.6" />
-          <path d="M24 14.5l14 4V29c0 9.6-6.2 16-14 19.4C16.2 45 10 38.6 10 29V18.5z" fill="none" stroke="url(#gold)" stroke-width="1" opacity=".7" />
-          <text x="24" y="38" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-weight="700" fill="url(#gold)">G</text>
+          <circle cx="50" cy="50" r="46" fill="none" stroke="url(#gold)" stroke-width="5" />
+          <g clip-path="url(#ggg-clip)" fill="none" stroke="url(#gold)" stroke-width="5.2" stroke-linecap="butt" stroke-linejoin="miter">
+            <!-- chap G -->
+            <path d="M33 26 A12.5 12.5 0 0 0 8 26 V74 A12.5 12.5 0 0 0 33 74 V55 H21" />
+            <!-- o'rta G -->
+            <path d="M62.5 26 A12.5 12.5 0 0 0 37.5 26 V74 A12.5 12.5 0 0 0 62.5 74 V55 H50.5" />
+            <!-- o'ng G -->
+            <path d="M92 26 A12.5 12.5 0 0 0 67 26 V74 A12.5 12.5 0 0 0 92 74 V55 H80" />
+          </g>
         </svg>
         <div class="brand-text">
-          <div class="brand-name">GOLD 777</div>
-          <div class="brand-sub">MEBEL KORXONASI</div>
+          <div class="brand-name">GOLD777</div>
+          <div class="brand-sub">M E B E L</div>
         </div>
       </div>
 
@@ -146,7 +153,7 @@
               <thead><tr><th>Material nomi</th><th>Qoldiq</th><th>Minimal</th></tr></thead>
               <tbody id="materials"></tbody>
             </table>
-            <a class="more" href="#">Barchasini ko‘rish</a>
+            <a class="more" href="#materiallar" data-more="materiallar">Barchasini ko‘rish</a>
           </div>
           <div class="card">
             <div class="card-title">KASPIY PUL OQIMI (BUGUN)</div>
@@ -156,7 +163,7 @@
 
         <!-- ROW 3 -->
         <div class="row row-3">
-          <div class="card chart-card">
+          <div class="card chart-card go-card" data-more="savdo-tahlil" title="Bosing — sana oralig‘i bilan batafsil">
             <div class="card-head">
               <div class="card-title">OXIRGI 30 KUNLIK SAVDO GRAFIKI</div>
               <label class="mini-select">
@@ -170,13 +177,13 @@
             </div>
             <div class="chart" id="line-chart"></div>
           </div>
-          <div class="card chart-card">
+          <div class="card chart-card go-card" data-more="savdo-tahlil" title="Ustunni bosing — o‘sha oy batafsil">
             <div class="card-head">
               <div class="card-title">OYLAR BO‘YICHA SAVDO TAQQOSLASH</div>
             </div>
             <div class="chart" id="bar-chart"></div>
           </div>
-          <div class="card chart-card">
+          <div class="card chart-card go-card" data-more="top-foydali">
             <div class="card-head">
               <div class="card-title">KATEGORIYALAR BO‘YICHA SAVDO (OY)</div>
             </div>
@@ -195,7 +202,7 @@
               <thead><tr><th class="n">№</th><th>Mahsulot nomi</th><th class="r">Sotilgan</th><th class="r">Summa</th></tr></thead>
               <tbody id="top-sold"></tbody>
             </table>
-            <a class="more" href="#">Barchasini ko‘rish</a>
+            <a class="more" href="#top-sotilgan" data-more="top-sotilgan">Barchasini ko‘rish</a>
           </div>
           <div class="card">
             <div class="card-title">ENG FOYDALI MAHSULOTLAR (OY)</div>
@@ -203,7 +210,7 @@
               <thead><tr><th class="n">№</th><th>Mahsulot nomi</th><th class="r">Foyda</th><th class="r">Foyda %</th></tr></thead>
               <tbody id="top-profit"></tbody>
             </table>
-            <a class="more" href="#">Barchasini ko‘rish</a>
+            <a class="more" href="#top-foydali" data-more="top-foydali">Barchasini ko‘rish</a>
           </div>
           <div class="card">
             <div class="card-title">KARZDOR MIJOZLAR</div>
@@ -211,7 +218,7 @@
               <thead><tr><th>Mijoz nomi</th><th class="r">Qarzdorlik</th><th class="r">Muddati</th></tr></thead>
               <tbody id="debtors"></tbody>
             </table>
-            <a class="more" href="#">Barchasini ko‘rish</a>
+            <a class="more" href="#qarzdorlik" data-more="qarzdorlik">Barchasini ko‘rish</a>
           </div>
           <div class="card">
             <div class="card-title">TOPSHIRILISHI KERAK BO‘LGAN BUYURTMALAR</div>
@@ -219,7 +226,7 @@
               <thead><tr><th>Buyurtma №</th><th>Mijoz</th><th>Sana</th><th class="r">Summa</th></tr></thead>
               <tbody id="deliveries"></tbody>
             </table>
-            <a class="more" href="#">Barchasini ko‘rish</a>
+            <a class="more" href="#yetkazib" data-more="yetkazib">Barchasini ko‘rish</a>
           </div>
         </div>
       </section>

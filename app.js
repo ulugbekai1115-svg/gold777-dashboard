@@ -39,6 +39,10 @@
     check: '<circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.7 2.7L16.2 9.5"/>',
     van: '<path d="M2 6.5h11.5V16H2z"/><path d="M13.5 9.5h4.2L21.5 13v3h-8"/><circle cx="6" cy="17.3" r="1.9"/><circle cx="17.5" cy="17.3" r="1.9"/>',
     arrowUp: '<path d="M12 19V5M6 11l6-6 6 6"/>',
+    supplier: '<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>',
+    kassa: '<rect x="2.5" y="6" width="19" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.6"/><path d="M6 9.5v.01M18 15.5v.01"/>',
+    expense: '<path d="M4 3h16v18l-3-2-3 2-2-2-2 2-3-2-3 2z"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+    loss: '<path d="M3 6l6 6 4-4 8 8"/><path d="M21 11v5h-5"/>',
   };
 
   // ---------- data ----------
@@ -49,13 +53,32 @@
     ['ishlab', 'Ishlab chiqarish', I.factory],
     ['ombor', 'Ombor', I.warehouse],
     ['materiallar', 'Materiallar', I.materials],
+    ['taminotchilar', 'Ta’minotchilar', I.supplier],
     ['mijozlar', 'Mijozlar', I.users],
     ['yetkazib', 'Yetkazib berish', I.truck],
+    ['kassa', 'Kassa', I.kassa],
+    ['xarajatlar', 'Xarajatlar', I.expense],
     ['qarzdorlik', 'Qarzdorlik', I.coin],
+    ['ziyon', 'Ziyonlar', I.loss],
     ['xodimlar', 'Xodimlar', I.staff],
     ['hisobotlar', 'Hisobotlar', I.reports],
     ['sozlamalar', 'Sozlamalar', I.settings],
   ];
+  // menyuda ko'rinmaydigan ichki sahifalar: [sarlavha, ota bo'lim]
+  const HIDDEN = {
+    'top-sotilgan': ['Eng ko‘p sotilgan mahsulotlar', 'savdo'],
+    'top-foydali': ['Eng foydali mahsulotlar', 'savdo'],
+    'top-mijozlar': ['Eng yaxshi xaridor mijozlar', 'mijozlar'],
+    'savdo-tahlil': ['Savdo tahlili', 'savdo'],
+  };
+  const SUBS = {
+    kassa: 'Naqd, karta/terminal va Click/Payme — filiallar bo‘yicha',
+    xarajatlar: 'Kategoriyalar bo‘yicha oylik limit va sarf',
+    hisobotlar: 'Tahliliy hisobotlar',
+    sozlamalar: 'Korxona va tizim sozlamalari',
+    'savdo-tahlil': 'Kunlik grafik (sana oralig‘i) va oylar bo‘yicha taqqoslash',
+  };
+  const isPage = (k) => MENU.some((m) => m[0] === k) || k in HIDDEN;
 
   const KPIS = [
     { color: '#2f6fed', icon: I.cart, label: 'BUGUNGI SAVDO', value: 35780000, unit: 'so‘m', trend: '12.5%', note: 'kechagiga nisbatan' },
@@ -111,27 +134,13 @@
     ['Boshqalar', 4.3, '#9aa5b4'],
   ];
 
-  const TOP_SOLD = [
-    ['Oshxona mebeli “LUX-1”', '23 dona', '138 000 000'],
-    ['Shkaf-kupe “Gold 2400”', '18 dona', '108 000 000'],
-    ['Yotoqxona “Classic”', '15 dona', '90 000 000'],
-    ['Oshxona mebeli “Modern”', '12 dona', '72 000 000'],
-    ['Bolalar xonasi “Kids-1”', '9 dona', '54 000 000'],
-  ];
-  const TOP_PROFIT = [
-    ['Shkaf-kupe “Premium”', '32 400 000', '32%'],
-    ['Oshxona mebeli “LUX-1”', '26 450 000', '28%'],
-    ['Yotoqxona “Classic”', '21 600 000', '24%'],
-    ['Oshxona mebeli “Modern”', '16 800 000', '23%'],
-    ['Ofis mebeli “Optima”', '9 750 000', '22%'],
-  ];
-  const DEBTORS = [
-    ['Abdullaev Oybek', '18 500 000', '12 kun'],
-    ['Saidov Akmal', '15 200 000', '8 kun'],
-    ['Karimov Dilshod', '12 750 000', '5 kun'],
-    ['Mirzayeva Nargiza', '9 600 000', '3 kun'],
-    ['Jumanazarov Baxodir', '8 300 000', '11 kun'],
-  ];
+  // Dashboard jadvallari ichki sahifalardagi ma'lumotdan olinadi (tashqarida top-5, ichida top-20)
+  const GP = window.G777Pages;
+  const TOP_SOLD = () => GP.topSold().slice(0, 5).map((p) => [p.nomi, `${p.sotildi} dona`, fmt(p.tushum)]);
+  const TOP_PROFIT = () => GP.topProfit().slice(0, 5).map((p) => [p.nomi, fmt(p.foyda), `${p.foizi}%`]);
+  const DEBTORS = () =>
+    [...GP.DEBTORS].sort((a, b) => b.jami - b.tolangan - (a.jami - a.tolangan)).slice(0, 5)
+      .map((d) => [d.mijoz, fmt(d.jami - d.tolangan), `${Math.max(0, GP.overdue(d))} kun`]);
   const DELIVERIES = [
     ['B-0057', 'Rustamov A.', '24.05.2024', '8 750 000'],
     ['B-0052', 'Saidov B.', '25.05.2024', '6 200 000'],
@@ -186,7 +195,8 @@
     toastT = setTimeout(() => (t.hidden = true), 2200);
   }
   let modalSubmit = null;
-  function openModal(title, html, onSubmit) {
+  function openModal(title, html, onSubmit, wide) {
+    document.querySelector('.modal').classList.toggle('wide', !!wide);
     $('modal-title').textContent = title;
     $('modal-form').innerHTML = html;
     modalSubmit = onSubmit;
@@ -208,34 +218,34 @@
   const pages = window.G777Pages.create({ I, fmt, toast, openModal, BRANCHES });
 
   function go(key) {
+    if (!isPage(key)) key = 'dashboard';
+    const changed = state.page !== key;
     state.page = key;
-    renderMenu(key);
-    closePanels();
     const item = MENU.find((m) => m[0] === key);
+    renderMenu(item ? key : HIDDEN[key][1]);
+    closePanels();
     const isDash = key === 'dashboard';
     $('view-dashboard').hidden = !isDash;
     $('view-page').hidden = isDash;
-    $('page-title').textContent = item[1];
+    $('page-title').textContent = item ? item[1] : HIDDEN[key][0];
     const br = state.branch.short ? ` · ${state.branch.name}` : '';
     if (isDash) {
       $('page-subtitle').textContent = 'Korxona umumiy ko‘rsatkichlari' + br;
       renderDashboardData();
     } else {
       const p = pages.PAGES[key];
-      $('page-subtitle').textContent = (p ? p.sub : key === 'hisobotlar' ? 'Tahliliy hisobotlar' : 'Korxona va tizim sozlamalari') + br;
+      $('page-subtitle').textContent = (SUBS[key] || (p ? p.sub : '')) + br;
       pages.renderPage(key, $('view-page'), state);
-      window.scrollTo(0, 0);
+      if (changed) window.scrollTo(0, 0);
     }
     if (location.hash !== '#' + key) history.pushState(null, '', '#' + key);
   }
-  addEventListener('hashchange', () => {
-    const k = location.hash.slice(1);
-    if (k !== state.page && MENU.some((m) => m[0] === k)) go(k);
-  });
-  addEventListener('popstate', () => {
+  const onHash = () => {
     const k = location.hash.slice(1) || 'dashboard';
-    if (k !== state.page && MENU.some((m) => m[0] === k)) go(k);
-  });
+    if (k !== state.page && isPage(k)) go(k);
+  };
+  addEventListener('hashchange', onHash);
+  addEventListener('popstate', onHash);
 
   // mobil menyu
   function setSidebar(open) {
@@ -412,8 +422,24 @@
     renderKpis();
     renderStatuses();
     renderCash();
+    renderTables();
     drawCharts();
   }
+
+  // dashboard: kartalar va "Barchasini ko'rish" ichki sahifalarga olib kiradi
+  const KPI_GO = ['savdo', 'savdo-tahlil', 'top-foydali', 'kassa', 'qarzdorlik', 'buyurtmalar'];
+  $('view-dashboard').addEventListener('click', (e) => {
+    if (e.target.closest('select, .mini-select')) return;
+    const pl = e.target.closest('[data-product]');
+    if (pl) { e.preventDefault(); return pages.productDetail(pl.dataset.product); }
+    const more = e.target.closest('[data-more]');
+    if (more) { e.preventDefault(); return go(more.dataset.more); }
+    const kpi = e.target.closest('.kpi');
+    if (kpi) return go(KPI_GO[[...$('kpis').children].indexOf(kpi)]);
+    if (e.target.closest('.status')) return go('buyurtmalar');
+    if (e.target.closest('#cash')) return go('kassa');
+    if (e.target.closest('.cg-link')) return go(e.target.closest('.cg-link').dataset.more);
+  });
 
   // ---------- render: KPI ----------
   function renderKpis() {
@@ -469,13 +495,18 @@
     $('materials').innerHTML = MATERIALS.map(
       ([n, q, m]) => `<tr><td>${n}</td><td><span class="qbar"></span>${q} dona</td><td>${m} dona</td></tr>`,
     ).join('');
-    $('top-sold').innerHTML = TOP_SOLD.map(
-      (r, i) => `<tr><td class="n">${i + 1}</td><td>${r[0]}</td><td class="r">${r[1]}</td><td class="r">${r[2]}</td></tr>`,
+    const b = state.branch.short;
+    const plink = (n) => `<a href="#" class="plink-d" data-product="${n.replace(/"/g, '&quot;')}">${n}</a>`;
+    const sold = GP.topSold().filter((p) => !b || p.filial === b).slice(0, 5);
+    const prof = GP.topProfit().filter((p) => !b || p.filial === b).slice(0, 5);
+    const debt = [...GP.DEBTORS].filter((d) => !b || d.filial === b).sort((x, y) => y.jami - y.tolangan - (x.jami - x.tolangan)).slice(0, 5);
+    $('top-sold').innerHTML = sold.map(
+      (p, i) => `<tr><td class="n">${i + 1}</td><td>${plink(p.nomi)}</td><td class="r">${p.sotildi} dona</td><td class="r">${fmt(p.tushum)}</td></tr>`,
     ).join('');
-    $('top-profit').innerHTML = TOP_PROFIT.map(
-      (r, i) => `<tr><td class="n">${i + 1}</td><td>${r[0]}</td><td class="r">${r[1]}</td><td class="r">${r[2]}</td></tr>`,
+    $('top-profit').innerHTML = prof.map(
+      (p, i) => `<tr><td class="n">${i + 1}</td><td>${plink(p.nomi)}</td><td class="r">${fmt(p.foyda)}</td><td class="r">${p.foizi}%</td></tr>`,
     ).join('');
-    $('debtors').innerHTML = DEBTORS.map((r) => `<tr><td>${r[0]}</td><td class="r">${r[1]}</td><td class="r">${r[2]}</td></tr>`).join('');
+    $('debtors').innerHTML = debt.map((d) => `<tr><td>${d.mijoz}</td><td class="r">${fmt(d.jami - d.tolangan)}</td><td class="r">${Math.max(0, GP.overdue(d))} kun</td></tr>`).join('');
     $('deliveries').innerHTML = DELIVERIES.map(
       (r) => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class="r">${r[3]}</td></tr>`,
     ).join('');
@@ -596,7 +627,12 @@
           el('rect', { x: bx, y: T + ih - h, width: bw, height: Math.min(h, ((prev - cur) / max) * ih * 0.35), fill: '#9fb7e8', rx: 1 }, svg);
         }
         r.style.cursor = 'pointer';
-        r.addEventListener('mousemove', (e) => showTip(e, `${MONTHS[i]} · ${name}<b>${fmt(v * 1000000)} so‘m</b>`));
+        r.addEventListener('mousemove', (e) => showTip(e, `${MONTHS[i]} · ${name}<b>${fmt(v * 1000000)} so‘m</b><span style="opacity:.7">Bosing — batafsil</span>`));
+        r.addEventListener('click', (e) => {
+          e.stopPropagation();
+          hideTip();
+          pages.monthDetail(i, state.branch.short);
+        });
         r.addEventListener('mouseleave', hideTip);
       });
       const tx = el('text', { x: cx, y: H - 4, class: 'ax', 'text-anchor': 'middle' }, svg);
@@ -678,5 +714,5 @@
   // ---------- init ----------
   renderTables();
   const start = location.hash.slice(1);
-  go(MENU.some((m) => m[0] === start) ? start : 'dashboard');
+  go(isPage(start) ? start : 'dashboard');
 })();
