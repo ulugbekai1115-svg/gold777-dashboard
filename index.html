@@ -38,8 +38,8 @@
 
       <div class="sidebar-bottom">
         <div class="company-label">KORXONA <svg viewBox="0 0 24 24" class="i-xs"><path d="M6 9l6 6 6-6"/></svg></div>
-        <button class="company-select" type="button">
-          <span>Gold 777 Mebel</span>
+        <button class="company-select" id="company-btn" type="button">
+          <span id="company-text">Gold 777 Mebel</span>
           <svg viewBox="0 0 24 24" class="i-sm"><path d="M6 9l6 6 6-6"/></svg>
         </button>
         <div class="support">
@@ -66,24 +66,44 @@
             <svg viewBox="0 0 24 24" class="i-sm chev"><path d="M6 9l6 6 6-6"/></svg>
             <input type="date" id="date-input" value="2024-05-23" aria-label="Sana" />
           </label>
-          <label class="control period-control">
-            <select id="period" aria-label="Davr">
-              <option>Bugun</option>
-              <option>Kecha</option>
-              <option>Shu hafta</option>
-              <option>Shu oy</option>
-              <option>Shu yil</option>
-            </select>
-            <svg viewBox="0 0 24 24" class="i-sm chev"><path d="M6 9l6 6 6-6"/></svg>
-          </label>
+          <div class="dd" id="period-dd">
+            <button class="control period-control" id="period-btn" type="button" aria-haspopup="true">
+              <span id="period-text">Bugun</span>
+              <svg viewBox="0 0 24 24" class="i-sm chev"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div class="dd-panel period-panel" id="period-panel" hidden>
+              <div class="dd-list" id="period-list"></div>
+              <div class="range">
+                <div class="range-title">Sana oralig‘ini tanlash</div>
+                <div class="range-row">
+                  <label>Dan<input type="date" id="range-from" value="2024-05-01" /></label>
+                  <label>Gacha<input type="date" id="range-to" value="2024-05-31" /></label>
+                </div>
+                <div class="range-quick">
+                  <button type="button" data-quick="month">Shu oy (1–31)</button>
+                  <button type="button" data-quick="prev">O‘tgan oy</button>
+                  <button type="button" data-quick="7">Oxirgi 7 kun</button>
+                </div>
+                <div class="range-err" id="range-err" hidden></div>
+                <button class="btn-gold btn-block" id="range-apply" type="button">Qo‘llash</button>
+              </div>
+            </div>
+          </div>
           <button class="control icon-btn" id="refresh" type="button" title="Yangilash">
             <svg viewBox="0 0 24 24" class="i-md"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16M3 12a9 9 0 0 1 15.5-6.2L21 8M21 3v5h-5M3 21v-5h5"/></svg>
           </button>
-          <button class="bell" type="button" title="Bildirishnomalar">
-            <svg viewBox="0 0 24 24" class="i-lg"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>
-            <span class="bell-badge">5</span>
-          </button>
-          <div class="user">
+          <div class="dd bell-dd">
+            <button class="bell" id="bell-btn" type="button" title="Bildirishnomalar">
+              <svg viewBox="0 0 24 24" class="i-lg"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>
+              <span class="bell-badge" id="bell-badge">5</span>
+            </button>
+            <div class="dd-panel notif-panel" id="notif-panel" hidden>
+              <div class="dd-head">Bildirishnomalar <button type="button" class="link-btn" id="notif-read">Hammasini o‘qildi</button></div>
+              <div id="notif-list"></div>
+            </div>
+          </div>
+          <div class="dd user-dd">
+          <button class="user" id="user-btn" type="button" aria-haspopup="true">
             <div class="user-text">
               <div class="user-name">Admin</div>
               <div class="user-role">Rahbar</div>
@@ -97,6 +117,14 @@
                 <path d="M17.6 24.6L20 27.5l2.4-2.9" fill="none" stroke="#0f1e36" stroke-width=".8" />
               </svg>
             </div>
+          </button>
+          <div class="dd-panel branch-panel" id="branch-panel" hidden>
+            <div class="dd-head">Filialni tanlang</div>
+            <div class="dd-list" id="branch-list"></div>
+            <div class="dd-sep"></div>
+            <button type="button" class="dd-item" data-go="sozlamalar"><svg viewBox="0 0 24 24" class="i-sm"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Profil va sozlamalar</button>
+            <button type="button" class="dd-item danger" id="logout"><svg viewBox="0 0 24 24" class="i-sm"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Chiqish</button>
+          </div>
           </div>
         </div>
       </header>
@@ -195,14 +223,7 @@
         </div>
       </section>
 
-      <section id="view-placeholder" class="view placeholder" hidden>
-        <div class="card placeholder-card">
-          <div class="placeholder-icon" id="placeholder-icon"></div>
-          <h2 id="placeholder-title">Bo‘lim</h2>
-          <p>Bu bo‘lim tez orada ishga tushiriladi.</p>
-          <button class="btn-gold" type="button" data-go="dashboard">Dashboardga qaytish</button>
-        </div>
-      </section>
+      <section id="view-page" class="view page" hidden></section>
 
       <footer class="footer">
         <span>Merasoft Argos</span><i>•</i><span>Gold 777 Mebel korxonasi</span><i>•</i><span id="foot-date">23.05.2024</span><i>•</i><span id="foot-time">10:30</span>
@@ -211,6 +232,14 @@
   </div>
 
   <div class="tooltip" id="tooltip" hidden></div>
+  <div class="modal-bg" id="modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-head"><h3 id="modal-title">Qo‘shish</h3><button type="button" class="x" id="modal-close" aria-label="Yopish">×</button></div>
+      <form id="modal-form"></form>
+    </div>
+  </div>
+  <div class="toast" id="toast" hidden></div>
+  <script src="pages.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

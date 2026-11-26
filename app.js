@@ -152,19 +152,79 @@
     ).join('');
   }
 
+  // ---------- filiallar va davr ----------
+  const BRANCHES = [
+    { id: 'all', name: 'Barcha filiallar', short: '', factor: 1, addr: '', boss: '', tel: '', staff: 42 },
+    { id: 'chil', name: 'Chilonzor filiali (Bosh ofis)', short: 'Chilonzor', factor: 0.4, addr: 'Toshkent, Chilonzor, Bunyodkor ko‘ch. 7', boss: 'Karimov Sanjar', tel: '+998 90 123 77 70', staff: 17 },
+    { id: 'yun', name: 'Yunusobod filiali', short: 'Yunusobod', factor: 0.27, addr: 'Toshkent, Yunusobod 4-kv, Amir Temur 108', boss: 'Aliyev Jamshid', tel: '+998 90 123 77 71', staff: 11 },
+    { id: 'ser', name: 'Sergeli filiali', short: 'Sergeli', factor: 0.18, addr: 'Toshkent, Sergeli 7, Yangi Sergeli 21', boss: 'Rahmonov Otabek', tel: '+998 90 123 77 72', staff: 8 },
+    { id: 'sam', name: 'Samarqand filiali', short: 'Samarqand', factor: 0.15, addr: 'Samarqand, Rudakiy ko‘ch. 45', boss: 'Normurodov Akbar', tel: '+998 90 123 77 73', staff: 6 },
+  ];
+  const PERIODS = [
+    ['bugun', 'Bugun', 1],
+    ['kecha', 'Kecha', 0.91],
+    ['hafta', 'Shu hafta', 1.06],
+    ['oy', 'Shu oy', 1],
+    ['yil', 'Shu yil', 1.12],
+  ];
+  const state = {
+    branch: BRANCHES[0],
+    period: 'bugun',
+    periodLabel: 'Bugun',
+    periodFactor: 1,
+    page: 'dashboard',
+  };
+  const factor = () => state.branch.factor * state.periodFactor;
+
+  // ---------- modal / toast ----------
+  let toastT;
+  function toast(msg) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.hidden = false;
+    clearTimeout(toastT);
+    toastT = setTimeout(() => (t.hidden = true), 2200);
+  }
+  let modalSubmit = null;
+  function openModal(title, html, onSubmit) {
+    $('modal-title').textContent = title;
+    $('modal-form').innerHTML = html;
+    modalSubmit = onSubmit;
+    $('modal').hidden = false;
+    const first = $('modal-form').querySelector('input,select');
+    if (first) first.focus();
+  }
+  const closeModal = () => ($('modal').hidden = true);
+  $('modal-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (modalSubmit) modalSubmit(new FormData(e.target));
+    closeModal();
+  });
+  $('modal-close').addEventListener('click', closeModal);
+  $('modal').addEventListener('click', (e) => {
+    if (e.target.id === 'modal' || e.target.closest('[data-close]')) closeModal();
+  });
+
+  const pages = window.G777Pages.create({ I, fmt, toast, openModal, BRANCHES });
+
   function go(key) {
+    state.page = key;
     renderMenu(key);
+    closePanels();
     const item = MENU.find((m) => m[0] === key);
     const isDash = key === 'dashboard';
     $('view-dashboard').hidden = !isDash;
-    $('view-placeholder').hidden = isDash;
+    $('view-page').hidden = isDash;
     $('page-title').textContent = item[1];
-    $('page-subtitle').textContent = isDash ? 'Korxona umumiy ko‘rsatkichlari' : `${item[1]} bo‘limi`;
-    if (!isDash) {
-      $('placeholder-title').textContent = item[1];
-      $('placeholder-icon').innerHTML = `<svg viewBox="0 0 24 24">${item[2]}</svg>`;
+    const br = state.branch.short ? ` · ${state.branch.name}` : '';
+    if (isDash) {
+      $('page-subtitle').textContent = 'Korxona umumiy ko‘rsatkichlari' + br;
+      renderDashboardData();
     } else {
-      drawCharts();
+      const p = pages.PAGES[key];
+      $('page-subtitle').textContent = (p ? p.sub : key === 'hisobotlar' ? 'Tahliliy hisobotlar' : 'Korxona va tizim sozlamalari') + br;
+      pages.renderPage(key, $('view-page'), state);
+      window.scrollTo(0, 0);
     }
     if (location.hash !== '#' + key) history.replaceState(null, '', '#' + key);
   }
@@ -176,9 +236,170 @@
     if (b) return go(b.dataset.go);
   });
 
+  // ---------- dropdown panellar ----------
+  const PANELS = ['period-panel', 'branch-panel', 'notif-panel'];
+  function closePanels(except) {
+    PANELS.forEach((id) => {
+      if (id !== except) $(id).hidden = true;
+    });
+  }
+  function toggle(id) {
+    const open = $(id).hidden;
+    closePanels(id);
+    $(id).hidden = !open;
+  }
+  document.addEventListener('mousedown', (e) => {
+    if (!e.target.closest('.dd') && !e.target.closest('#company-btn')) closePanels();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closePanels();
+      closeModal();
+    }
+  });
+
+  // filial
+  function renderBranches() {
+    $('branch-list').innerHTML = BRANCHES.map(
+      (b) => `<button type="button" class="dd-item${b === state.branch ? ' active' : ''}" data-branch="${b.id}">
+        <span class="br-ico">${b.short ? b.short.slice(0, 2).toUpperCase() : '★'}</span>
+        <span>${b.name}<small>${b.short ? b.addr : 'Umumiy ko‘rsatkichlar'}</small></span>
+        ${b === state.branch ? '<svg viewBox="0 0 24 24" class="check"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : ''}
+      </button>`,
+    ).join('');
+  }
+  $('user-btn').addEventListener('click', () => {
+    renderBranches();
+    toggle('branch-panel');
+  });
+  $('company-btn').addEventListener('click', () => {
+    renderBranches();
+    toggle('branch-panel');
+  });
+  $('branch-list').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-branch]');
+    if (!b) return;
+    state.branch = BRANCHES.find((x) => x.id === b.dataset.branch);
+    $('company-text').textContent = state.branch.short ? `Gold 777 · ${state.branch.short}` : 'Gold 777 Mebel';
+    closePanels();
+    go(state.page);
+    toast(`Filial: ${state.branch.name}`);
+  });
+  $('logout').addEventListener('click', () => {
+    closePanels();
+    toast('Tizimdan chiqish (namuna)');
+  });
+
+  // davr
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const isoToUz = (v) => {
+    const [y, m, d] = v.split('-');
+    return `${d}.${m}.${y}`;
+  };
+  function renderPeriods() {
+    $('period-list').innerHTML = PERIODS.map(
+      ([id, label]) => `<button type="button" class="dd-item${state.period === id ? ' active' : ''}" data-period="${id}">${label}
+        ${state.period === id ? '<svg viewBox="0 0 24 24" class="check"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : ''}</button>`,
+    ).join('');
+  }
+  function setPeriod(id, label, f) {
+    state.period = id;
+    state.periodLabel = label;
+    state.periodFactor = f;
+    $('period-text').textContent = label;
+    $('period-btn').classList.toggle('wide', id === 'range');
+    closePanels();
+    go(state.page);
+  }
+  $('period-btn').addEventListener('click', () => {
+    renderPeriods();
+    $('range-err').hidden = true;
+    toggle('period-panel');
+  });
+  $('period-list').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-period]');
+    if (!b) return;
+    const p = PERIODS.find((x) => x[0] === b.dataset.period);
+    setPeriod(p[0], p[1], p[2]);
+  });
+  document.querySelector('.range-quick').addEventListener('click', (e) => {
+    const q = e.target.closest('[data-quick]');
+    if (!q) return;
+    const base = new Date(($('date-input').value || '2024-05-23') + 'T00:00');
+    let from, to;
+    if (q.dataset.quick === 'month') {
+      from = new Date(base.getFullYear(), base.getMonth(), 1);
+      to = new Date(base.getFullYear(), base.getMonth() + 1, 0);
+    } else if (q.dataset.quick === 'prev') {
+      from = new Date(base.getFullYear(), base.getMonth() - 1, 1);
+      to = new Date(base.getFullYear(), base.getMonth(), 0);
+    } else {
+      to = base;
+      from = new Date(base);
+      from.setDate(from.getDate() - 6);
+    }
+    const iso = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+    $('range-from').value = iso(from);
+    $('range-to').value = iso(to);
+  });
+  $('range-apply').addEventListener('click', () => {
+    const a = $('range-from').value, b = $('range-to').value;
+    const err = $('range-err');
+    if (!a || !b) {
+      err.textContent = 'Ikkala sanani ham tanlang.';
+      err.hidden = false;
+      return;
+    }
+    if (a > b) {
+      err.textContent = '“Dan” sanasi “Gacha” sanasidan keyin bo‘lishi mumkin emas.';
+      err.hidden = false;
+      return;
+    }
+    const days = Math.round((new Date(b) - new Date(a)) / 86400000) + 1;
+    const [ad, am] = isoToUz(a).split('.');
+    const label = a.slice(0, 7) === b.slice(0, 7) ? `${ad}–${isoToUz(b)}` : `${ad}.${am} – ${isoToUz(b)}`;
+    setPeriod('range', label, Math.min(1.25, Math.max(0.5, days / 30)));
+    toast(`Davr: ${isoToUz(a)} – ${isoToUz(b)} (${days} kun)`);
+  });
+
+  // bildirishnomalar
+  const NOTIFS = [
+    ['#ef4f4f', 'MDF 16 mm tugab bormoqda', 'Qoldiq 23 dona, minimal 50 dona', '10 daqiqa oldin'],
+    ['#f5b000', 'B-0054 buyurtma kechikmoqda', '2-sex, muddat 22.05.2024 edi', '35 daqiqa oldin'],
+    ['#1fa463', 'Yangi to‘lov qabul qilindi', 'Saidov Akmal — 6 000 000 so‘m', '1 soat oldin'],
+    ['#2f6fed', 'Yangi buyurtma B-0061', 'Xolmatov Sardor — Oshxona “LUX-1”', '2 soat oldin'],
+    ['#8b46d8', 'B-0052 yo‘lga chiqdi', 'Haydovchi: Nurmatov Kamol', '3 soat oldin'],
+  ];
+  let notifRead = false;
+  function renderNotifs() {
+    $('notif-list').innerHTML = NOTIFS.map(
+      ([c, t, d, time]) => `<div class="notif${notifRead ? ' read' : ''}"><span class="n-dot" style="background:${c}"></span><div><b>${t}</b><span>${d}</span><time>${time}</time></div></div>`,
+    ).join('');
+  }
+  $('bell-btn').addEventListener('click', () => {
+    renderNotifs();
+    toggle('notif-panel');
+  });
+  $('notif-read').addEventListener('click', () => {
+    notifRead = true;
+    $('bell-badge').hidden = true;
+    renderNotifs();
+  });
+
+  function renderDashboardData() {
+    renderKpis();
+    renderStatuses();
+    renderCash();
+    drawCharts();
+  }
+
   // ---------- render: KPI ----------
   function renderKpis() {
-    $('kpis').innerHTML = KPIS.map((k) => {
+    const f = factor();
+    $('kpis').innerHTML = KPIS.map((k0) => {
+      const k = { ...k0, value: k0.unit === 'ta' ? Math.round(k0.value * f) : k0.value * f };
+      if (k.split) k.split = k.split.map(([l, v]) => [l, v * f]);
+      if (k.sum) k.sum = k.sum * f;
       let foot = '';
       if (k.trend) {
         foot = `<div class="kpi-foot"><span class="trend ${k.bad ? 'bad' : 'up'}">${icon(I.arrowUp)}${k.trend}</span><span>${k.note}</span></div>`;
@@ -208,18 +429,23 @@
       <div class="status" style="background:${s.bg}">
         <svg viewBox="0 0 24 24" style="stroke:${s.fg};${s.fill ? `fill:${s.fg}` : ''}">${s.icon}</svg>
         <div class="status-label">${s.label}</div>
-        <div class="status-num">${s.n}<small>ta</small></div>
-        <div class="status-sum">${fmt(s.sum)} so‘m</div>
+        <div class="status-num">${Math.round(s.n * factor())}<small>ta</small></div>
+        <div class="status-sum">${fmt(s.sum * factor())} so‘m</div>
       </div>`,
     ).join('');
+  }
+
+  function renderCash() {
+    const f = factor();
+    $('cash').innerHTML = CASH.map(([k, v, c]) => {
+      const n = Number(v.replace(/[^\d-]/g, '')) * f;
+      return `<div class="cash-row ${c || ''}"><span class="k">${k}</span><span class="v">${fmt(n)}</span></div>`;
+    }).join('');
   }
 
   function renderTables() {
     $('materials').innerHTML = MATERIALS.map(
       ([n, q, m]) => `<tr><td>${n}</td><td><span class="qbar"></span>${q} dona</td><td>${m} dona</td></tr>`,
-    ).join('');
-    $('cash').innerHTML = CASH.map(
-      ([k, v, c]) => `<div class="cash-row ${c || ''}"><span class="k">${k}</span><span class="v">${v}</span></div>`,
     ).join('');
     $('top-sold').innerHTML = TOP_SOLD.map(
       (r, i) => `<tr><td class="n">${i + 1}</td><td>${r[0]}</td><td class="r">${r[1]}</td><td class="r">${r[2]}</td></tr>`,
@@ -251,7 +477,7 @@
     const box = $('line-chart');
     box.innerHTML = '';
     const days = Number($('days').value);
-    const data = DAILY.slice(-days);
+    const data = DAILY.slice(-days).map((v) => v * state.branch.factor);
     const start = new Date(DAILY_START);
     start.setDate(start.getDate() + (DAILY.length - data.length));
     const W = box.clientWidth, H = box.clientHeight;
@@ -334,7 +560,7 @@
 
     const gw = iw / 12;
     const bw = Math.max(2, Math.min(8, gw * 0.26));
-    MONTHLY.forEach(([cur, prev], i) => {
+    MONTHLY.map(([a, b]) => [a * state.branch.factor, b * state.branch.factor]).forEach(([cur, prev], i) => {
       const cx = L + gw * i + gw / 2;
       const bars = [
         [cx - bw - 1, cur, '#3a6fe0', 'Joriy yil'],
@@ -378,7 +604,7 @@
       }, svg);
       c.addEventListener('mousemove', (e) => {
         c.setAttribute('stroke-width', sw + 4);
-        showTip(e, `${name}<b>${pct}% · ${fmt(845250000 * pct / 100)} so‘m</b>`);
+        showTip(e, `${name}<b>${pct}% · ${fmt((845250000 * state.branch.factor * pct) / 100)} so‘m</b>`);
       });
       c.addEventListener('mouseleave', () => {
         c.setAttribute('stroke-width', sw);
@@ -388,7 +614,7 @@
     });
     const center = document.createElement('div');
     center.className = 'donut-center';
-    center.innerHTML = '<b>845 250 000</b><span>Jami</span>';
+    center.innerHTML = `<b>${fmt(845250000 * state.branch.factor)}</b><span>Jami</span>`;
     box.appendChild(center);
 
     $('legend').innerHTML = CATEGORIES.map(
@@ -428,8 +654,6 @@
   });
 
   // ---------- init ----------
-  renderKpis();
-  renderStatuses();
   renderTables();
   const start = location.hash.slice(1);
   go(MENU.some((m) => m[0] === start) ? start : 'dashboard');
