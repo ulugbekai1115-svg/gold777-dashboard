@@ -226,10 +226,32 @@
       pages.renderPage(key, $('view-page'), state);
       window.scrollTo(0, 0);
     }
-    if (location.hash !== '#' + key) history.replaceState(null, '', '#' + key);
+    if (location.hash !== '#' + key) history.pushState(null, '', '#' + key);
   }
+  addEventListener('hashchange', () => {
+    const k = location.hash.slice(1);
+    if (k !== state.page && MENU.some((m) => m[0] === k)) go(k);
+  });
+  addEventListener('popstate', () => {
+    const k = location.hash.slice(1) || 'dashboard';
+    if (k !== state.page && MENU.some((m) => m[0] === k)) go(k);
+  });
+
+  // mobil menyu
+  function setSidebar(open) {
+    document.querySelector('.sidebar').classList.toggle('open', open);
+    let ov = document.querySelector('.sb-overlay');
+    if (open && !ov) {
+      ov = document.createElement('div');
+      ov.className = 'sb-overlay';
+      ov.addEventListener('click', () => setSidebar(false));
+      document.body.appendChild(ov);
+    } else if (!open && ov) ov.remove();
+  }
+  $('burger').addEventListener('click', () => setSidebar(true));
 
   document.addEventListener('click', (e) => {
+    if (e.target.closest('.menu-item') || e.target.closest('[data-go]')) setSidebar(false);
     const m = e.target.closest('.menu-item');
     if (m) return go(m.dataset.key);
     const b = e.target.closest('[data-go]');
